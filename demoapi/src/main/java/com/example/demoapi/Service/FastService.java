@@ -32,27 +32,27 @@ public class FastService {
            return new CommonResponse<>(response.getBody().getData());
         }
     }
-    private class ExpensiveTask<T> implements Callable<CommonResponse<T>> {
-
-        public ExpensiveTask(String url, HttpMethod method, HttpEntity<?> requestEntity, ParameterizedTypeReference<CommonResponse<T>> type) {
-            this.url = url;
-            this.method = method;
-            this.requestEntity = requestEntity;
-            this.type = type;
-        }
-
-        private String url;
-        private HttpMethod method;
-        private HttpEntity<?> requestEntity;
-        private ParameterizedTypeReference<CommonResponse<T>> type;
-
-
-        @Override
-        public CommonResponse<T> call() throws Exception {
-            return restTemplateCall(url,method,requestEntity,type);
-        }
-
-    }
+//    private class ExpensiveTask<T> implements Callable<CommonResponse<T>> {
+//
+//        public ExpensiveTask(String url, HttpMethod method, HttpEntity<?> requestEntity, ParameterizedTypeReference<CommonResponse<T>> type) {
+//            this.url = url;
+//            this.method = method;
+//            this.requestEntity = requestEntity;
+//            this.type = type;
+//        }
+//
+//        private String url;
+//        private HttpMethod method;
+//        private HttpEntity<?> requestEntity;
+//        private ParameterizedTypeReference<CommonResponse<T>> type;
+//
+//
+//        @Override
+//        public CommonResponse<T> call() throws Exception {
+//            return restTemplateCall(url,method,requestEntity,type);
+//        }
+//
+//    }
 
     public CommonResponse<FastagDataDTO> getVehicleFastagById(Long fastagId, Long vehicleId) {
         HttpHeaders headers = new HttpHeaders();
@@ -83,8 +83,13 @@ public class FastService {
         for(int i=0;i<fastagId.size();i+=25){
             List<Long > longList = fastagId.subList(i,i + Math.min(25, fastagId.size() - i));
             String url =  "http://ocms.staging-we.com/vehicles/fastags/id/in?fastagIds=" + StringUtils.join(longList,"&fastagIds=");
-            Future<CommonResponse<FilterResponseDTO>> commonResponseFuture = executorService.submit(
-                    new ExpensiveTask<FilterResponseDTO>(url, HttpMethod.GET, requestHttpEntity, new ParameterizedTypeReference<CommonResponse<FilterResponseDTO>>() {}));
+            Future<CommonResponse<FilterResponseDTO>> commonResponseFuture = executorService.submit(new Callable<CommonResponse<FilterResponseDTO>>() {
+                @Override
+                public CommonResponse<FilterResponseDTO> call() throws Exception {
+                    return restTemplateCall(url, HttpMethod.GET, requestHttpEntity, new ParameterizedTypeReference<CommonResponse<FilterResponseDTO>>() {});
+                }
+            });
+//       new ExpensiveTask<FilterResponseDTO>(url, HttpMethod.GET, requestHttpEntity, new ParameterizedTypeReference<CommonResponse<FilterResponseDTO>>() {}));
             if(commonResponseFuture.get().getData().getVehicleFastags() != null)
             {
                 response.getData().setVehicleFastags (commonResponseFuture.get().getData().getVehicleFastags());
